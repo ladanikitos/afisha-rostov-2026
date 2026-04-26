@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>🎉 Афиша Ростова-на-Дону</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <h1>🎉📍 Афиша Ростова-на-Дону</h1>
+
+        <p>✨ Все лучшие события города в одном месте ✨</p>
+
+    </header>
+
+
+
+    <div class="chat-top">
+
+        <div class="chat-section">
+
+            <h2>🤖 Бот-помощник</h2>
+
+            <div id="chat-box" class="chat-box"></div>
+
+            <div class="input-area"><input type="text" id="user-input" placeholder="🔍 Или напиши свой вопрос..." autocomplete="off"><button id="send-button">➤</button></div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        <div class="events-grid" id="events-grid"></div>
+
+
+
+        <div class="side-panel">
+
+            <div class="countdown-box">
+
+                <h3>⏰ Таймер события</h3>
+
+                <div class="countdown-event" id="user-event-name">Выбери событие</div>
+
+                <div class="countdown-timer" id="countdown">
+
+                    <div class="time-block"><span id="cd-days">—</span><small>дней</small></div>
+
+                    <div class="time-block"><span id="cd-hours">—</span><small>часов</small></div>
+
+                    <div class="time-block"><span id="cd-minutes">—</span><small>минут</small></div>
+
+                </div>
+
+                <div class="countdown-input">
+
+                    <select id="event-select">
+
+                        <option value="">— Выбери событие —</option>
+
+                    </select>
+
+                    <button onclick="startEventCountdown()">▶ Запустить таймер</button>
+
+                </div>
+
+            </div>
+
+            <div class="weather-box">
+
+                <h3>🌤 Погода в Ростове</h3>
+
+                <div class="weather-info">
+
+                    <span class="weather-icon" id="weather-icon">🌤</span>
+
+                    <span class="weather-temp" id="weather-temp">—°C</span>
+
+                </div>
+
+                <p id="weather-desc">Загрузка...</p>
+
+            </div>
+
+            <div class="fav-box">
+
+                <h3>⭐ Избранное</h3>
+
+                <div class="fav-list" id="fav-list">
+
+                    <p style="color:#888;font-size:.8rem;">Нажми ⭐ у события</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <footer>© 2026 Афиша Ростова-на-Дону | 🦋 Хороших выходных!</footer>
+
+    <script src="script.js"></script>
+
+    <script>
+
+        function renderCards() {
+
+            const now = new Date();
+
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            const grid = document.getElementById('events-grid');
+
+            const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+
+            
+
+            const upcoming = (typeof events !== 'undefined' ? events : []).filter(e => {
+
+                return new Date(e.date) >= today;
+
+            }).slice(0, 6);
+
+            
+
+            const tags = {
+
+                'тусить': '🎵 Музыка', 'спокойно': '🧘 Отдых', 'культурно': '🎨 Культура',
+
+                'с ребёнком': '🧒 Дети', 'тренировка': '💪 Спорт'
+
+            };
+
+            const tagColors = {
+
+                'тусить': 'background:rgba(255,105,180,0.2);border-color:rgba(255,105,180,0.4)',
+
+                'спокойно': 'background:rgba(0,200,255,0.2);border-color:rgba(0,200,255,0.4)',
+
+                'культурно': 'background:rgba(138,43,226,0.2);border-color:rgba(138,43,226,0.4)',
+
+                'с ребёнком': 'background:rgba(50,200,100,0.2);border-color:rgba(50,200,100,0.4)',
+
+                'тренировка': 'background:rgba(255,165,0,0.2);border-color:rgba(255,165,0,0.4)'
+
+            };
+
+            
+
+            grid.innerHTML = upcoming.map((e, i) => {
+
+                const d = new Date(e.date);
+
+                const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+                const hours = String(d.getHours()).padStart(2, '0');
+
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+
+                const timeStr = (hours === '00' && minutes === '00') ? '' : `, ${hours}:${minutes}`;
+
+                const isFav = favs.includes(e.name);
+
+                return `<div class="card" style="animation-delay:${i*0.1}s">
+
+                    <h3>${e.name} <span class="fav-star${isFav?' active':''}" data-event="${e.name.replace(/'/g, "\\'")}" style="cursor:pointer;font-size:1.2rem;margin-left:8px;color:${isFav?'#ffcc00':'#555'}">${isFav?'⭐':'☆'}</span></h3>
+
+                    <p>📅 ${d.getDate()} ${months[d.getMonth()]}${timeStr}</p>
+
+                    <p>📍 ${e.place}</p>
+
+                    <span class="tag" style="${tagColors[e.mood]||''}">${tags[e.mood]||'🎉 Событие'}</span>
+
+                </div>`;
+
+            }).join('');
+
+            
+
+            setTimeout(() => {
+
+                document.querySelectorAll('#events-grid .fav-star').forEach(star => {
+
+                    star.addEventListener('click', function(e) {
+
+                        e.stopPropagation();
+
+                        const name = this.dataset.event;
+
+                        let favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+
+                        if (favs.includes(name)) {
+
+                            favs = favs.filter(f => f !== name);
+
+                            this.textContent = '☆';
+
+                            this.style.color = '#555';
+
+                            this.classList.remove('active');
+
+                        } else {
+
+                            favs.push(name);
+
+                            this.textContent = '⭐';
+
+                            this.style.color = '#ffcc00';
+
+                            this.classList.add('active');
+
+                        }
+
+                        localStorage.setItem('favorites', JSON.stringify(favs));
+
+                        if (typeof refreshFavoritesUI === 'function') refreshFavoritesUI();
+
+                    });
+
+                });
+
+            }, 100);
+
+        }
+
+
+
+        let userTargetDate = null;
+
+        let countdownInterval = null;
+
+        const timerEvents = [
+
+            { name: '🎬 Кино под открытым небом', date: '2026-04-27T20:00' },
+
+            { name: '🤘 Рок-вечеринка', date: '2026-04-27T21:00' },
+
+            { name: '🎸 Ночные гитары', date: '2026-04-28T19:00' },
+
+            { name: '🕺 Танцы на набережной', date: '2026-04-30T19:00' },
+
+            { name: '🎭 Вишнёвый сад', date: '2026-04-30T18:00' },
+
+            { name: '🍷 Фестиваль кухни', date: '2026-05-01T12:00' },
+
+            { name: '🎻 Симфония весны', date: '2026-05-02T19:00' },
+
+            { name: '🎵 Open-air фестиваль', date: '2026-06-15T16:00' },
+
+            { name: '🎆 День города', date: '2026-09-20T12:00' },
+
+            { name: '🎃 Хэллоуин', date: '2026-10-31T21:00' },
+
+            { name: '🎨 Ночь искусств', date: '2026-11-04T18:00' },
+
+            { name: '🎄 Новогодняя ярмарка', date: '2026-12-20T10:00' },
+
+            { name: '🎅 Детская ёлка', date: '2026-12-25T11:00' },
+
+        ];
+
+        
+
+        const select = document.getElementById('event-select');
+
+        timerEvents.forEach(e => {
+
+            const option = document.createElement('option');
+
+            option.value = e.date;
+
+            option.textContent = e.name;
+
+            select.appendChild(option);
+
+        });
+
+
+
+        function startEventCountdown() {
+
+            const sel = document.getElementById('event-select');
+
+            const name = sel.options[sel.selectedIndex].text;
+
+            const dateStr = sel.value;
+
+            if (!dateStr) { alert('Выбери событие!'); return; }
+
+            userTargetDate = new Date(dateStr);
+
+            document.getElementById('user-event-name').textContent = name;
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            updateUserCountdown();
+
+            countdownInterval = setInterval(updateUserCountdown, 60000);
+
+        }
+
+
+
+        function updateUserCountdown() {
+
+            if (!userTargetDate) return;
+
+            const now = new Date();
+
+            const diff = userTargetDate - now;
+
+            if (diff <= 0) {
+
+                document.getElementById('cd-days').textContent = '00';
+
+                document.getElementById('cd-hours').textContent = '00';
+
+                document.getElementById('cd-minutes').textContent = '00';
+
+                document.getElementById('user-event-name').textContent = '🎉 Уже идёт!';
+
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                return;
+
+            }
+
+            document.getElementById('cd-days').textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
+
+            document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+
+            document.getElementById('cd-minutes').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+
+        }
+
+
+
+        renderCards();
+
+        let lastCardDate = new Date().toDateString();
+
+        setInterval(() => {
+
+            const now = new Date();
+
+            if (now.toDateString() !== lastCardDate) {
+
+                lastCardDate = now.toDateString();
+
+                renderCards();
+
+            }
+
+        }, 60000);
+
+    </script>
+
+</body>
+
+</html>
